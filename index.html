@@ -36,8 +36,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .b-routine{background:#eff6ff;color:#3b82f6}
 .b-work{background:#fffbeb;color:#d97706}
 .b-personal{background:#f4f4f4;color:#666}
-.del-btn{font-size:12px;color:#ccc;padding:2px 6px;border:none;background:none;cursor:pointer;border-radius:4px}
-.del-btn:hover{color:#ef4444}
+.icon-btn{font-size:13px;color:#ccc;padding:2px 5px;border:none;background:none;cursor:pointer;border-radius:4px;flex-shrink:0}
+.icon-btn:hover{color:#555}
+.icon-btn.del:hover{color:#ef4444}
 .add-btn{width:100%;padding:9px;border:1.5px dashed #ddd;border-radius:8px;background:none;color:#aaa;font-size:13px;cursor:pointer;text-align:center;margin-top:4px}
 .add-btn:hover{background:#f8f8f4;color:#666}
 .add-form{background:#f8f8f4;border-radius:12px;padding:1rem;margin-bottom:1rem;border:1px solid #e0e0d8}
@@ -78,7 +79,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cal-task-preview{font-size:9px;color:#555;padding:1px 3px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;border:1px solid #eee}
 .cal-more{font-size:9px;color:#aaa;text-align:center;margin-top:1px}
 .popup-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center}
-.popup{background:#fff;border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:740px;max-height:70vh;overflow-y:auto}
+.popup{background:#fff;border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:740px;max-height:75vh;overflow-y:auto}
 .popup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
 .popup-title{font-size:16px;font-weight:600}
 .popup-close{background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;line-height:1}
@@ -104,6 +105,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .day-btn.sel{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .banner{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
 .banner-warn{background:#fffbeb;color:#d97706;border:1px solid #fed7aa}
+.edit-form{background:#f0f7ff;border-radius:10px;padding:.875rem;margin-bottom:6px;border:1px solid #bfdbfe}
+.edit-form .form-row input,.edit-form .form-row select{background:#fff}
 </style>
 </head>
 <body>
@@ -140,33 +143,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="add-form-wrap" class="add-form hidden">
       <div class="form-row">
         <input type="text" id="new-name" placeholder="할 일 이름" />
-        <select id="new-type">
-          <option value="routine">루틴</option>
-          <option value="work">업무</option>
-          <option value="personal">개인</option>
-        </select>
+        <select id="new-type"><option value="routine">루틴</option><option value="work">업무</option><option value="personal">개인</option></select>
       </div>
       <div class="form-row">
         <input type="time" id="new-time" />
-        <select id="new-period">
-          <option value="morning">오전</option>
-          <option value="afternoon">오후</option>
-          <option value="evening">저녁</option>
-        </select>
+        <select id="new-period"><option value="morning">오전</option><option value="afternoon">오후</option><option value="evening">저녁</option></select>
       </div>
       <div class="form-actions">
         <button class="cancel-btn" onclick="hideForm()">취소</button>
         <button class="save-btn" onclick="addTask()">추가</button>
       </div>
     </div>
-    <div class="section-label">오전</div>
-    <div id="tasks-morning"></div>
-    <br>
-    <div class="section-label">오후</div>
-    <div id="tasks-afternoon"></div>
-    <br>
-    <div class="section-label">저녁</div>
-    <div id="tasks-evening"></div>
+    <div class="section-label">오전</div><div id="tasks-morning"></div><br>
+    <div class="section-label">오후</div><div id="tasks-afternoon"></div><br>
+    <div class="section-label">저녁</div><div id="tasks-evening"></div>
     <button class="add-btn" onclick="showForm()">+ 할 일 추가</button>
   </div>
 </div>
@@ -208,8 +198,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="stat-card"><div class="stat-num" id="stat-rate">0%</div><div class="stat-lbl">주간 달성률</div></div>
     </div>
     <div class="section-label">카테고리별</div>
-    <div id="cat-stats"></div>
-    <br>
+    <div id="cat-stats"></div><br>
     <div class="section-label">월간 요약</div>
     <div id="month-stats"></div>
   </div>
@@ -217,34 +206,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="tab-settings" class="hidden">
   <div class="card">
-    <div style="font-size:13px;color:#888;margin-bottom:1rem">루틴을 추가하거나 삭제할 수 있어. 기본 루틴은 삭제 안 돼.</div>
+    <div style="font-size:13px;color:#888;margin-bottom:1rem">✏️ 수정, ✕ 삭제 가능. 기본 루틴은 삭제 안 돼.</div>
     <div id="routine-list-settings"></div>
     <button class="add-btn" onclick="showRoutineForm()">+ 루틴 추가</button>
     <div id="routine-form-wrap" class="add-form hidden" style="margin-top:1rem">
       <div class="form-row">
         <input type="text" id="r-name" placeholder="루틴 이름" />
-        <select id="r-type">
-          <option value="routine">루틴</option>
-          <option value="work">업무</option>
-          <option value="personal">개인</option>
-        </select>
+        <select id="r-type"><option value="routine">루틴</option><option value="work">업무</option><option value="personal">개인</option></select>
       </div>
       <div class="form-row">
         <input type="time" id="r-time" />
-        <select id="r-period">
-          <option value="morning">오전</option>
-          <option value="afternoon">오후</option>
-          <option value="evening">저녁</option>
-        </select>
+        <select id="r-period"><option value="morning">오전</option><option value="afternoon">오후</option><option value="evening">저녁</option></select>
       </div>
       <div style="margin-bottom:8px;font-size:13px;color:#888">반복 요일</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="day-picker">
-        <button class="day-btn" data-d="0">일</button>
-        <button class="day-btn" data-d="1">월</button>
-        <button class="day-btn" data-d="2">화</button>
-        <button class="day-btn" data-d="3">수</button>
-        <button class="day-btn" data-d="4">목</button>
-        <button class="day-btn" data-d="5">금</button>
+        <button class="day-btn" data-d="0">일</button><button class="day-btn" data-d="1">월</button>
+        <button class="day-btn" data-d="2">화</button><button class="day-btn" data-d="3">수</button>
+        <button class="day-btn" data-d="4">목</button><button class="day-btn" data-d="5">금</button>
         <button class="day-btn" data-d="6">토</button>
       </div>
       <div class="form-actions">
@@ -281,6 +259,7 @@ const DAYS_KR=['일','월','화','수','목','금','토'];
 let today=new Date();
 let viewDate=new Date(today);
 let viewMonth=new Date(today.getFullYear(),today.getMonth(),1);
+let editingRoutineId=null;
 
 const BASE_ROUTINES=[
   {id:1,name:'테니스',type:'routine',period:'morning',time:'07:00',days:[2,4]},
@@ -294,7 +273,7 @@ const BASE_ROUTINES=[
 
 function gs(){try{return JSON.parse(localStorage.getItem('danalog3')||'{}')}catch(e){return{}}}
 function ss(d){try{localStorage.setItem('danalog3',JSON.stringify(d))}catch(e){}}
-function getRoutines(){const s=gs();return s.routines||BASE_ROUTINES;}
+function getRoutines(){const s=gs();return s.routines||JSON.parse(JSON.stringify(BASE_ROUTINES));}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 
 function getDayTasks(d){
@@ -368,7 +347,7 @@ function renderToday(){
         ${t.time?`<span class="task-time">${t.time}</span>`:''}
         <span class="task-name">${t.name}</span>
         <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span>
-        ${!BASE_ROUTINES.find(r=>r.id===t.id)?`<button class="del-btn" onclick="event.stopPropagation();deleteExtraTask(${t.id})">✕</button>`:''}
+        ${!BASE_ROUTINES.find(r=>r.id===t.id)?`<button class="icon-btn del" onclick="event.stopPropagation();deleteExtraTask(${t.id})">✕</button>`:''}
       </div>`).join('');
   });
   const done=tasks.filter(t=>t.done).length;const total=tasks.length;
@@ -448,7 +427,6 @@ function calCell(d,other,checked){
 
 function openDayPopup(key){
   const d=new Date(key);
-  const s=gs();const checked=s.checked||{};
   const tasks=getDayTasks(d).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
   const done=tasks.filter(t=>t.done).length;
   document.getElementById('popup-title').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]}) · ${done}/${tasks.length} 완료`;
@@ -521,17 +499,71 @@ function renderStats(){
 
 function renderRoutineSettings(){
   const routines=getRoutines();
+  const isBase=r=>BASE_ROUTINES.find(b=>b.id===r.id);
   document.getElementById('routine-list-settings').innerHTML=routines.map(r=>`
-    <div class="task-row" style="cursor:default">
-      <span class="task-name">${r.name}</span>
-      ${r.time?`<span class="task-time">${r.time}</span>`:''}
-      <span class="badge b-${r.type}">${r.type==='routine'?'루틴':r.type==='work'?'업무':'개인'}</span>
-      <span style="font-size:11px;color:#aaa">${r.days.map(d=>DAYS_KR[d]).join(' ')}</span>
-      ${!BASE_ROUTINES.find(b=>b.id===r.id)?`<button class="del-btn" onclick="deleteRoutine(${r.id})">✕</button>`:''}
+    <div id="routine-item-${r.id}">
+      <div class="task-row" style="cursor:default">
+        <span class="task-name">${r.name}</span>
+        ${r.time?`<span class="task-time">${r.time}</span>`:''}
+        <span class="badge b-${r.type}">${r.type==='routine'?'루틴':r.type==='work'?'업무':'개인'}</span>
+        <span style="font-size:11px;color:#aaa">${r.days.map(d=>DAYS_KR[d]).join(' ')}</span>
+        <button class="icon-btn" onclick="toggleEditForm(${r.id})" title="수정">✏️</button>
+        ${!isBase(r)?`<button class="icon-btn del" onclick="deleteRoutine(${r.id})" title="삭제">✕</button>`:''}
+      </div>
+      <div id="edit-form-${r.id}" class="edit-form hidden">
+        <div class="form-row">
+          <input type="text" id="e-name-${r.id}" value="${r.name}" placeholder="루틴 이름" />
+          <select id="e-type-${r.id}">
+            <option value="routine" ${r.type==='routine'?'selected':''}>루틴</option>
+            <option value="work" ${r.type==='work'?'selected':''}>업무</option>
+            <option value="personal" ${r.type==='personal'?'selected':''}>개인</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <input type="time" id="e-time-${r.id}" value="${r.time||''}" />
+          <select id="e-period-${r.id}">
+            <option value="morning" ${r.period==='morning'?'selected':''}>오전</option>
+            <option value="afternoon" ${r.period==='afternoon'?'selected':''}>오후</option>
+            <option value="evening" ${r.period==='evening'?'selected':''}>저녁</option>
+          </select>
+        </div>
+        <div style="margin-bottom:8px;font-size:13px;color:#888">반복 요일</div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          ${[0,1,2,3,4,5,6].map(d=>`<button class="day-btn ${r.days.includes(d)?'sel':''}" data-edit="${r.id}" data-d="${d}" onclick="toggleEditDay(this)">${DAYS_KR[d]}</button>`).join('')}
+        </div>
+        <div class="form-actions">
+          <button class="cancel-btn" onclick="toggleEditForm(${r.id})">취소</button>
+          <button class="save-btn" onclick="saveRoutineEdit(${r.id})">저장</button>
+        </div>
+      </div>
     </div>`).join('');
 }
 
+function toggleEditForm(id){
+  const el=document.getElementById(`edit-form-${id}`);
+  el.classList.toggle('hidden');
+}
+
+function toggleEditDay(btn){
+  btn.classList.toggle('sel');
+}
+
+function saveRoutineEdit(id){
+  const name=document.getElementById(`e-name-${id}`).value.trim();
+  if(!name){alert('이름을 입력해줘!');return;}
+  const type=document.getElementById(`e-type-${id}`).value;
+  const time=document.getElementById(`e-time-${id}`).value;
+  const period=document.getElementById(`e-period-${id}`).value;
+  const days=[...document.querySelectorAll(`[data-edit="${id}"].sel`)].map(b=>parseInt(b.dataset.d));
+  if(!days.length){alert('요일을 선택해줘!');return;}
+  const s=gs();
+  const routines=getRoutines().map(r=>r.id===id?{...r,name,type,time,period,days}:r);
+  s.routines=routines;ss(s);
+  renderRoutineSettings();
+}
+
 function deleteRoutine(id){
+  if(!confirm('이 루틴을 삭제할까?'))return;
   const s=gs();s.routines=getRoutines().filter(r=>r.id!==id);ss(s);renderRoutineSettings();
 }
 
@@ -612,7 +644,7 @@ function addTask(){
 function showRoutineForm(){document.getElementById('routine-form-wrap').classList.remove('hidden');}
 function hideRoutineForm(){document.getElementById('routine-form-wrap').classList.add('hidden');}
 
-document.querySelectorAll('.day-btn').forEach(btn=>{
+document.querySelectorAll('#day-picker .day-btn').forEach(btn=>{
   btn.addEventListener('click',()=>btn.classList.toggle('sel'));
 });
 
@@ -621,12 +653,12 @@ function addRoutine(){
   const type=document.getElementById('r-type').value;
   const time=document.getElementById('r-time').value;
   const period=document.getElementById('r-period').value;
-  const days=[...document.querySelectorAll('.day-btn.sel')].map(b=>parseInt(b.dataset.d));
+  const days=[...document.querySelectorAll('#day-picker .day-btn.sel')].map(b=>parseInt(b.dataset.d));
   if(!days.length){alert('요일을 선택해줘!');return;}
   const s=gs();const routines=getRoutines();const id=Date.now();
   routines.push({id,name,type,period,time,days});s.routines=routines;ss(s);
   hideRoutineForm();document.getElementById('r-name').value='';
-  document.querySelectorAll('.day-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('#day-picker .day-btn').forEach(b=>b.classList.remove('sel'));
   renderRoutineSettings();
 }
 
