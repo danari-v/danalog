@@ -8,7 +8,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f0;color:#1a1a1a;font-size:15px}
 .app{max-width:740px;margin:0 auto;padding:1rem}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid #e0e0d8;background:#fff;padding:1rem;border-radius:12px;margin-bottom:1rem}
+.header{display:flex;align-items:center;justify-content:space-between;background:#fff;padding:1rem;border-radius:12px;margin-bottom:1rem;border:1px solid #e8e8e0}
 .logo{font-size:22px;font-weight:600}
 .right-header{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .date-nav{display:flex;align-items:center;gap:8px;font-size:13px;color:#666}
@@ -55,22 +55,35 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .stat-num{font-size:24px;font-weight:600}
 .stat-lbl{font-size:11px;color:#888;margin-top:2px}
 .week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:1.25rem}
-.week-day{background:#f8f8f4;border-radius:8px;padding:8px 4px;text-align:center;border:1px solid #eee}
-.week-day.today{border-color:#1a1a1a}
-.week-day-name{font-size:11px;color:#aaa;margin-bottom:4px}
-.week-day-pct{font-size:13px;font-weight:600}
-.week-day-bar{height:4px;border-radius:99px;background:#e8e8e0;margin-top:5px;overflow:hidden}
-.week-day-fill{height:4px;border-radius:99px;background:#22c55e}
+.week-day-col{background:#f8f8f4;border-radius:8px;padding:8px 5px;border:1px solid #eee;min-height:80px}
+.week-day-col.today{border-color:#1a1a1a}
+.week-day-name{font-size:11px;color:#aaa;margin-bottom:3px;text-align:center}
+.week-day-date{font-size:10px;color:#bbb;text-align:center;margin-bottom:3px}
+.week-day-pct{font-size:12px;font-weight:600;text-align:center}
+.week-day-bar{height:3px;border-radius:99px;background:#e8e8e0;margin:3px 0 5px;overflow:hidden}
+.week-day-fill{height:3px;border-radius:99px;background:#22c55e}
+.week-task-item{font-size:9px;color:#555;padding:2px 3px;border-radius:3px;margin-bottom:2px;background:#fff;border:1px solid #eee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.week-task-item.done-item{opacity:.4;text-decoration:line-through}
 .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
 .month-nav span{font-size:15px;font-weight:600}
 .month-header-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px}
 .month-header-grid div{font-size:11px;color:#aaa;text-align:center;padding:2px 0}
 .month-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:1rem}
-.cal-day{border-radius:8px;padding:6px 4px;text-align:center;min-height:46px;background:#f8f8f4;border:1px solid #eee}
+.cal-day{border-radius:8px;padding:5px 4px;text-align:left;min-height:64px;background:#f8f8f4;border:1px solid #eee;cursor:pointer;transition:background .1s}
+.cal-day:hover{background:#ece9e0}
 .cal-day.today{border-color:#1a1a1a}
 .cal-day.other-month{opacity:.3}
-.cal-num{font-size:12px;font-weight:500}
-.cal-dot{width:7px;height:7px;border-radius:50%;margin:4px auto 0}
+.cal-num{font-size:11px;font-weight:600;margin-bottom:2px;text-align:center}
+.cal-dot{width:6px;height:6px;border-radius:50%;margin:0 auto 3px}
+.cal-task-preview{font-size:9px;color:#555;padding:1px 3px;border-radius:3px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fff;border:1px solid #eee}
+.cal-more{font-size:9px;color:#aaa;text-align:center;margin-top:1px}
+.popup-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.popup{background:#fff;border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:740px;max-height:70vh;overflow-y:auto}
+.popup-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.popup-title{font-size:16px;font-weight:600}
+.popup-close{background:none;border:none;font-size:22px;cursor:pointer;color:#aaa;line-height:1}
+.popup-task{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid #f0f0ea}
+.popup-task:last-child{border-bottom:none}
 .routine-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .routine-name{font-size:14px;min-width:90px}
 .bar-wrap{flex:1;background:#f0f0ea;border-radius:99px;height:6px}
@@ -91,7 +104,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .day-btn.sel{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
 .banner{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
 .banner-warn{background:#fffbeb;color:#d97706;border:1px solid #fed7aa}
-.banner-info{background:#eff6ff;color:#3b82f6;border:1px solid #bfdbfe}
 </style>
 </head>
 <body>
@@ -125,7 +137,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="card">
     <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
     <div class="prog-label" id="prog-label">0 / 0 완료</div>
-
     <div id="add-form-wrap" class="add-form hidden">
       <div class="form-row">
         <input type="text" id="new-name" placeholder="할 일 이름" />
@@ -148,7 +159,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="save-btn" onclick="addTask()">추가</button>
       </div>
     </div>
-
     <div class="section-label">오전</div>
     <div id="tasks-morning"></div>
     <br>
@@ -163,9 +173,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div id="tab-week" class="hidden">
   <div class="card">
-    <div class="section-label">요일별 달성률</div>
+    <div class="section-label">이번 주 일정 및 달성률</div>
     <div class="week-grid" id="week-grid"></div>
-    <div class="section-label">루틴 현황</div>
+    <div class="section-label" style="margin-top:.5rem">루틴 현황</div>
     <div id="week-routine-list"></div>
   </div>
 </div>
@@ -181,10 +191,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
     </div>
     <div class="month-grid" id="month-grid"></div>
-    <div style="display:flex;gap:12px;font-size:12px;color:#888;margin-top:6px">
+    <div style="display:flex;gap:12px;font-size:12px;color:#888;margin-top:6px;flex-wrap:wrap">
       <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:4px"></span>80%+</span>
       <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#f59e0b;margin-right:4px"></span>40~79%</span>
       <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:4px"></span>39% 이하</span>
+      <span style="color:#bbb">날짜 탭 → 상세 보기</span>
     </div>
   </div>
 </div>
@@ -253,16 +264,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div id="popup-overlay" class="popup-overlay hidden" onclick="closePopup(event)">
+  <div class="popup" onclick="event.stopPropagation()">
+    <div class="popup-header">
+      <div class="popup-title" id="popup-title"></div>
+      <button class="popup-close" onclick="closePopup()">✕</button>
+    </div>
+    <div id="popup-body"></div>
+  </div>
 </div>
 
+</div>
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbzU-VTvM7ioFau7VYr-YSTBIcXmXL6lQ7eB9DliiHmcycxJ3AgSgsZaKEMR-H4WHA4/exec';
-const DAYS_KR = ['일','월','화','수','목','금','토'];
-let today = new Date();
-let viewDate = new Date(today);
-let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+const API_URL='https://script.google.com/macros/s/AKfycbzU-VTvM7ioFau7VYr-YSTBIcXmXL6lQ7eB9DliiHmcycxJ3AgSgsZaKEMR-H4WHA4/exec';
+const DAYS_KR=['일','월','화','수','목','금','토'];
+let today=new Date();
+let viewDate=new Date(today);
+let viewMonth=new Date(today.getFullYear(),today.getMonth(),1);
 
-const BASE_ROUTINES = [
+const BASE_ROUTINES=[
   {id:1,name:'테니스',type:'routine',period:'morning',time:'07:00',days:[2,4]},
   {id:2,name:'런닝 / 운동',type:'routine',period:'morning',time:'06:30',days:[1,3,5]},
   {id:3,name:'영어 수업',type:'routine',period:'morning',time:'08:00',days:[3]},
@@ -300,9 +320,7 @@ async function syncNow(){
     const allDates=new Set([...Object.keys(checked),...Object.keys(extras)]);
     allDates.forEach(key=>{
       const d=new Date(key);const tasks=getDayTasks(d);
-      tasks.forEach(t=>{
-        entries.push({date:key,taskId:String(t.id),taskName:t.name,type:t.type,done:t.done?'true':'false',timestamp:new Date().toISOString()});
-      });
+      tasks.forEach(t=>{entries.push({date:key,taskId:String(t.id),taskName:t.name,type:t.type,done:t.done?'true':'false',timestamp:new Date().toISOString()});});
     });
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',entries})});
     const data=await res.json();
@@ -317,11 +335,9 @@ async function loadFromSheets(){
     const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'load'})});
     const data=await res.json();
     if(!data.ok){setSyncStatus('불러오기 실패',false);return;}
-    const s=gs();
-    if(!s.checked)s.checked={};
+    const s=gs();if(!s.checked)s.checked={};
     data.data.forEach(row=>{
-      const key=row.date;
-      const id=isNaN(Number(row.taskId))?row.taskId:Number(row.taskId);
+      const key=row.date;const id=isNaN(Number(row.taskId))?row.taskId:Number(row.taskId);
       if(!s.checked[key])s.checked[key]={};
       s.checked[key][id]=row.done==='true';
     });
@@ -373,10 +389,15 @@ function renderWeek(){
     const total=tasks.length;const done=total?tasks.filter(t=>checked[key]&&checked[key][t.id]).length:0;
     const pct=total?Math.round(done/total*100):0;
     const isToday=dateKey(d)===dateKey(today);
-    grid.innerHTML+=`<div class="week-day ${isToday?'today':''}">
+    const sorted=tasks.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    const items=sorted.slice(0,4).map(t=>`<div class="week-task-item ${checked[key]&&checked[key][t.id]?'done-item':''}">${t.name}</div>`).join('');
+    const more=sorted.length>4?`<div style="font-size:9px;color:#aaa;text-align:center">+${sorted.length-4}</div>`:'';
+    grid.innerHTML+=`<div class="week-day-col ${isToday?'today':''}">
       <div class="week-day-name">${DAYS_KR[d.getDay()]}</div>
+      <div class="week-day-date">${d.getDate()}</div>
       <div class="week-day-pct">${pct}%</div>
       <div class="week-day-bar"><div class="week-day-fill" style="width:${pct}%"></div></div>
+      ${items}${more}
     </div>`;
   }
   const routines=getRoutines().filter(r=>r.type==='routine');
@@ -416,10 +437,37 @@ function calCell(d,other,checked){
   const isToday=dateKey(d)===dateKey(today);
   let dotColor='transparent';
   if(total>0){if(pct>=80)dotColor='#22c55e';else if(pct>=40)dotColor='#f59e0b';else dotColor='#ef4444';}
-  return `<div class="cal-day ${other?'other-month':''} ${isToday?'today':''}">
+  const preview=tasks.slice(0,2).map(t=>`<div class="cal-task-preview">${t.name}</div>`).join('');
+  const more=tasks.length>2?`<div class="cal-more">+${tasks.length-2}</div>`:'';
+  return `<div class="cal-day ${other?'other-month':''} ${isToday?'today':''}" onclick="openDayPopup('${key}')">
     <div class="cal-num">${d.getDate()}</div>
     <div class="cal-dot" style="background:${dotColor}"></div>
+    ${preview}${more}
   </div>`;
+}
+
+function openDayPopup(key){
+  const d=new Date(key);
+  const s=gs();const checked=s.checked||{};
+  const tasks=getDayTasks(d).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const done=tasks.filter(t=>t.done).length;
+  document.getElementById('popup-title').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]}) · ${done}/${tasks.length} 완료`;
+  document.getElementById('popup-body').innerHTML=tasks.length===0
+    ?'<div style="color:#aaa;font-size:14px;padding:1.5rem 0;text-align:center">일정 없음</div>'
+    :tasks.map(t=>`
+      <div class="popup-task">
+        <div class="check ${t.done?'checked':''}">${t.done?'✓':''}</div>
+        ${t.time?`<span style="font-size:12px;color:#aaa;min-width:40px">${t.time}</span>`:''}
+        <span style="flex:1;font-size:14px;${t.done?'text-decoration:line-through;opacity:.5':''}">${t.name}</span>
+        <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span>
+      </div>`).join('');
+  document.getElementById('popup-overlay').classList.remove('hidden');
+}
+
+function closePopup(e){
+  if(!e||e.target===document.getElementById('popup-overlay')){
+    document.getElementById('popup-overlay').classList.add('hidden');
+  }
 }
 
 function renderStats(){
