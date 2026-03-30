@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Danalog 🐰</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -331,7 +334,7 @@ async function syncAll(){
     const rows=[];
     allDates.forEach(key=>{
       getDayTasks(new Date(key)).forEach(t=>{
-        rows.push({date:key,task_id:String(t.id),task_name:t.name,type:t.type,done:t.done,timestamp:new Date().toISOString()});
+        rows.push({date:key,task_id:String(t.id),task_name:t.name,type:t.type,period:t.period||'',time:t.time||'',done:t.done,timestamp:new Date().toISOString()});
       });
     });
     await supaFetch('danalog_log?id=gte.0',{method:'DELETE'});
@@ -373,8 +376,8 @@ async function loadAll(afterSync=false){
         if(!routineIds.has(idStr)){
           if(!s.extras[key])s.extras[key]=[];
           if(!s.extras[key].find(e=>String(e.id)===idStr)){
-            const periodGuess=row.time&&row.time<'12:00'?'morning':row.time&&row.time<'19:00'?'afternoon':'evening';
-            s.extras[key].push({id:id,name:row.task_name,type:row.type,period:periodGuess,time:row.time||'',days:[]});
+            const periodGuess=!row.time?'morning':row.time<'12:00'?'morning':row.time<'19:00'?'afternoon':'evening';
+            s.extras[key].push({id:id,name:row.task_name,type:row.type,period:row.period||periodGuess,time:row.time||'',days:[]});
           }
         }
       });
