@@ -122,7 +122,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="sync-row">
       <span class="sync-status" id="sync-status">준비 중...</span>
-      <button class="sync-btn" onclick="syncNow()">동기화</button>
+      <button class="sync-btn" onclick="syncAll()">동기화</button>
     </div>
   </div>
 </div>
@@ -254,16 +254,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </div>
 <script>
-const SUPA_URL = 'https://xpktnnmlseazyznnbeqs.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3Rubm1sc2Vhenl6bm5iZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDQyOTUsImV4cCI6MjA5MDM4MDI5NX0.S7fo0rLrga3ArOajAI_mo-UYZ_hm3l6m7Zi6j57Tii4';
-const TABLE = 'danalog_log';
-const DAYS_KR = ['일','월','화','수','목','금','토'];
+const SUPA_URL='https://xpktnnmlseazyznnbeqs.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3Rubm1sc2Vhenl6bm5iZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDQyOTUsImV4cCI6MjA5MDM4MDI5NX0.S7fo0rLrga3ArOajAI_mo-UYZ_hm3l6m7Zi6j57Tii4';
+const DAYS_KR=['일','월','화','수','목','금','토'];
 
-let today = new Date();
-let viewDate = new Date(today);
-let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+let today=new Date();
+let viewDate=new Date(today);
+let viewMonth=new Date(today.getFullYear(),today.getMonth(),1);
 
-const BASE_ROUTINES = [
+const BASE_ROUTINES=[
   {id:1,name:'테니스',type:'routine',period:'morning',time:'07:00',days:[2,4]},
   {id:2,name:'런닝 / 운동',type:'routine',period:'morning',time:'06:30',days:[1,3,5]},
   {id:3,name:'영어 수업',type:'routine',period:'morning',time:'08:00',days:[3]},
@@ -273,16 +272,15 @@ const BASE_ROUTINES = [
   {id:7,name:'일기 쓰기',type:'personal',period:'evening',time:'21:00',days:[0,1,2,3,4,5,6]},
 ];
 
-function gs(){try{return JSON.parse(localStorage.getItem('danalog4')||'{}')}catch(e){return{}}}
-function ss(d){try{localStorage.setItem('danalog4',JSON.stringify(d))}catch(e){}}
+function gs(){try{return JSON.parse(localStorage.getItem('danalog5')||'{}')}catch(e){return{}}}
+function ss(d){try{localStorage.setItem('danalog5',JSON.stringify(d))}catch(e){}}
 function getRoutines(){const s=gs();return s.routines||JSON.parse(JSON.stringify(BASE_ROUTINES));}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 
 function getDayTasks(d){
   const dow=d.getDay();const s=gs();const key=dateKey(d);
   const checked=s.checked||{};const extras=s.extras||{};
-  const routines=getRoutines();
-  const tasks=routines.filter(t=>t.days.includes(dow)).map(t=>({...t,done:!!(checked[key]&&checked[key][t.id])}));
+  const tasks=getRoutines().filter(t=>t.days.includes(dow)).map(t=>({...t,done:!!(checked[key]&&checked[key][t.id])}));
   const ext=(extras[key]||[]).map(t=>({...t,done:!!(checked[key]&&checked[key][t.id])}));
   return [...tasks,...ext];
 }
@@ -293,85 +291,96 @@ function setSyncStatus(msg,ok){
   el.style.color=ok===false?'#ef4444':ok===true?'#22c55e':'#aaa';
 }
 
-async function supaFetch(path, options={}){
-  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+async function supaFetch(table,options={}){
+  const res=await fetch(`${SUPA_URL}/rest/v1/${table}`,{
     ...options,
-    headers: {
-      'apikey': SUPA_KEY,
-      'Authorization': `Bearer ${SUPA_KEY}`,
-      'Content-Type': 'application/json',
-      'Prefer': 'return=minimal',
+    headers:{
+      'apikey':SUPA_KEY,
+      'Authorization':`Bearer ${SUPA_KEY}`,
+      'Content-Type':'application/json',
+      'Prefer':'return=minimal',
       ...(options.headers||{})
     }
   });
   return res;
 }
 
-async function syncNow(){
-  setSyncStatus('동기화 중...', null);
-  try {
+async function syncAll(){
+  setSyncStatus('동기화 중...',null);
+  try{
+    // 1. 루틴 동기화
+    await supaFetch('danalog_routines?id=gte.0',{method:'DELETE'});
+    const routines=getRoutines();
+    if(routines.length>0){
+      await supaFetch('danalog_routines',{
+        method:'POST',
+        body:JSON.stringify(routines.map(r=>({
+          routine_id:String(r.id),
+          name:r.name,
+          type:r.type,
+          period:r.period,
+          time:r.time||'',
+          days:JSON.stringify(r.days)
+        })))
+      });
+    }
+    // 2. 체크 데이터 동기화
     const s=gs();
-    const checked=s.checked||{};
-    const extras=s.extras||{};
+    const checked=s.checked||{};const extras=s.extras||{};
     const allDates=new Set([...Object.keys(checked),...Object.keys(extras)]);
     const rows=[];
     allDates.forEach(key=>{
-      const d=new Date(key);
-      getDayTasks(d).forEach(t=>{
-        rows.push({
-          date: key,
-          task_id: String(t.id),
-          task_name: t.name,
-          type: t.type,
-          done: t.done,
-          timestamp: new Date().toISOString()
-        });
+      getDayTasks(new Date(key)).forEach(t=>{
+        rows.push({date:key,task_id:String(t.id),task_name:t.name,type:t.type,done:t.done,timestamp:new Date().toISOString()});
       });
     });
-    // 기존 데이터 전체 삭제 후 새로 insert
-    const delRes = await supaFetch(`${TABLE}?id=gte.0`, {method:'DELETE'});
-    if(rows.length > 0){
-      const insRes = await supaFetch(TABLE, {
-        method:'POST',
-        headers:{'Prefer':'return=minimal'},
-        body: JSON.stringify(rows)
-      });
-      if(!insRes.ok){
-        const err = await insRes.text();
-        console.error('insert error:', err);
-        setSyncStatus('저장 실패', false);
-        return;
-      }
+    await supaFetch('danalog_log?id=gte.0',{method:'DELETE'});
+    if(rows.length>0){
+      await supaFetch('danalog_log',{method:'POST',body:JSON.stringify(rows)});
     }
-    setSyncStatus('동기화 완료 ✓', true);
-  } catch(e){
-    setSyncStatus('연결 실패', false);
+    setSyncStatus('동기화 완료 ✓',true);
+  }catch(e){
+    setSyncStatus('연결 실패',false);
     console.error(e);
   }
 }
 
-async function loadFromSupabase(){
-  setSyncStatus('불러오는 중...', null);
-  try {
-    const res = await supaFetch(`${TABLE}?select=*&order=date.asc`, {
-      method:'GET',
-      headers:{'Prefer':''}
-    });
-    const data = await res.json();
-    if(!Array.isArray(data)){setSyncStatus('불러오기 실패', false);return;}
-    const s=gs();
-    if(!s.checked)s.checked={};
-    data.forEach(row=>{
-      const key=row.date;
-      const id=isNaN(Number(row.task_id))?row.task_id:Number(row.task_id);
-      if(!s.checked[key])s.checked[key]={};
-      s.checked[key][id]=row.done;
-    });
-    ss(s);
-    setSyncStatus('불러오기 완료 ✓', true);
+async function loadAll(){
+  setSyncStatus('불러오는 중...',null);
+  try{
+    // 1. 루틴 불러오기
+    const rRes=await supaFetch('danalog_routines?select=*&order=id.asc',{method:'GET',headers:{'Prefer':''}});
+    const rData=await rRes.json();
+    if(Array.isArray(rData)&&rData.length>0){
+      const s=gs();
+      s.routines=rData.map(r=>({
+        id:isNaN(Number(r.routine_id))?r.routine_id:Number(r.routine_id),
+        name:r.name,
+        type:r.type,
+        period:r.period,
+        time:r.time,
+        days:JSON.parse(r.days||'[]')
+      }));
+      ss(s);
+    }
+    // 2. 체크 데이터 불러오기
+    const lRes=await supaFetch('danalog_log?select=*&order=date.asc',{method:'GET',headers:{'Prefer':''}});
+    const lData=await lRes.json();
+    if(Array.isArray(lData)){
+      const s=gs();
+      if(!s.checked)s.checked={};
+      lData.forEach(row=>{
+        const key=row.date;
+        const id=isNaN(Number(row.task_id))?row.task_id:Number(row.task_id);
+        if(!s.checked[key])s.checked[key]={};
+        s.checked[key][id]=row.done;
+      });
+      ss(s);
+    }
+    setSyncStatus('불러오기 완료 ✓',true);
     renderToday();
-  } catch(e){
-    setSyncStatus('연결 실패', false);
+  }catch(e){
+    setSyncStatus('연결 실패',false);
     console.error(e);
   }
 }
@@ -380,7 +389,7 @@ function toggleTask(id){
   const s=gs();const key=dateKey(viewDate);
   if(!s.checked)s.checked={};if(!s.checked[key])s.checked[key]={};
   s.checked[key][id]=!s.checked[key][id];
-  ss(s);renderToday();setTimeout(syncNow,800);
+  ss(s);renderToday();setTimeout(syncAll,800);
 }
 
 function deleteExtraTask(id){
@@ -605,11 +614,13 @@ function saveRoutineEdit(id){
   const s=gs();
   s.routines=getRoutines().map(r=>r.id===id?{...r,name,type,time,period,days}:r);
   ss(s);renderRoutineSettings();
+  setTimeout(syncAll,500);
 }
 
 function deleteRoutine(id){
   if(!confirm('이 루틴을 삭제할까?'))return;
-  const s=gs();s.routines=getRoutines().filter(r=>r.id!==id);ss(s);renderRoutineSettings();
+  const s=gs();s.routines=getRoutines().filter(r=>r.id!==id);ss(s);
+  renderRoutineSettings();setTimeout(syncAll,500);
 }
 
 function renderNotifList(){
@@ -683,7 +694,7 @@ function addTask(){
   if(!s.extras)s.extras={};if(!s.extras[key])s.extras[key]=[];
   const id=Date.now();
   s.extras[key].push({id,name,type,period,time,days:[viewDate.getDay()]});
-  ss(s);hideForm();document.getElementById('new-name').value='';renderToday();setTimeout(syncNow,800);
+  ss(s);hideForm();document.getElementById('new-name').value='';renderToday();setTimeout(syncAll,800);
 }
 
 function showRoutineForm(){document.getElementById('routine-form-wrap').classList.remove('hidden');}
@@ -704,11 +715,11 @@ function addRoutine(){
   routines.push({id,name,type,period,time,days});s.routines=routines;ss(s);
   hideRoutineForm();document.getElementById('r-name').value='';
   document.querySelectorAll('#day-picker .day-btn').forEach(b=>b.classList.remove('sel'));
-  renderRoutineSettings();
+  renderRoutineSettings();setTimeout(syncAll,500);
 }
 
 renderToday();
-loadFromSupabase();
+loadAll();
 scheduleNotifs();
 </script>
 </body>
