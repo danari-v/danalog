@@ -339,6 +339,7 @@ async function syncAll(){
       await supaFetch('danalog_log',{method:'POST',body:JSON.stringify(rows)});
     }
     setSyncStatus('동기화 완료 ✓',true);
+    await loadAll();
   }catch(e){
     setSyncStatus('연결 실패',false);
     console.error(e);
@@ -348,35 +349,37 @@ async function syncAll(){
 async function loadAll(){
   setSyncStatus('불러오는 중...',null);
   try{
-    // 1. 루틴 불러오기
     const rRes=await supaFetch('danalog_routines?select=*&order=id.asc',{method:'GET',headers:{'Prefer':''}});
     const rData=await rRes.json();
+    const s=gs();
     if(Array.isArray(rData)&&rData.length>0){
-      const s=gs();
       s.routines=rData.map(r=>({
         id:isNaN(Number(r.routine_id))?r.routine_id:Number(r.routine_id),
-        name:r.name,
-        type:r.type,
-        period:r.period,
-        time:r.time,
+        name:r.name,type:r.type,period:r.period,time:r.time,
         days:JSON.parse(r.days||'[]')
       }));
-      ss(s);
     }
-    // 2. 체크 데이터 불러오기
     const lRes=await supaFetch('danalog_log?select=*&order=date.asc',{method:'GET',headers:{'Prefer':''}});
     const lData=await lRes.json();
     if(Array.isArray(lData)){
-      const s=gs();
-      if(!s.checked)s.checked={};
+      s.checked={};s.extras={};
+      const routineIds=new Set((s.routines||BASE_ROUTINES).map(r=>String(r.id)));
       lData.forEach(row=>{
         const key=row.date;
-        const id=isNaN(Number(row.task_id))?row.task_id:Number(row.task_id);
+        const idStr=String(row.task_id);
+        const id=isNaN(Number(idStr))?idStr:Number(idStr);
         if(!s.checked[key])s.checked[key]={};
         s.checked[key][id]=row.done;
+        if(!routineIds.has(idStr)){
+          if(!s.extras[key])s.extras[key]=[];
+          if(!s.extras[key].find(e=>String(e.id)===idStr)){
+            const periodGuess=row.time&&row.time<'12:00'?'morning':row.time&&row.time<'17:00'?'afternoon':'evening';
+            s.extras[key].push({id:id,name:row.task_name,type:row.type,period:periodGuess,time:row.time||'',days:[]});
+          }
+        }
       });
-      ss(s);
     }
+    ss(s);
     setSyncStatus('불러오기 완료 ✓',true);
     renderToday();
   }catch(e){
