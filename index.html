@@ -254,14 +254,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </div>
 <script>
-const API_URL='https://script.google.com/macros/s/AKfycbzU-VTvM7ioFau7VYr-YSTBIcXmXL6lQ7eB9DliiHmcycxJ3AgSgsZaKEMR-H4WHA4/exec';
-const DAYS_KR=['일','월','화','수','목','금','토'];
-let today=new Date();
-let viewDate=new Date(today);
-let viewMonth=new Date(today.getFullYear(),today.getMonth(),1);
-let editingRoutineId=null;
+const SUPA_URL = 'https://xpktnnmlseazyznnbeqs.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3Rubm1sc2Vhenl6bm5iZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDQyOTUsImV4cCI6MjA5MDM4MDI5NX0.S7fo0rLrga3ArOajAI_mo-UYZ_hm3l6m7Zi6j57Tii4';
+const TABLE = 'danalog_log';
+const DAYS_KR = ['일','월','화','수','목','금','토'];
 
-const BASE_ROUTINES=[
+let today = new Date();
+let viewDate = new Date(today);
+let viewMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+const BASE_ROUTINES = [
   {id:1,name:'테니스',type:'routine',period:'morning',time:'07:00',days:[2,4]},
   {id:2,name:'런닝 / 운동',type:'routine',period:'morning',time:'06:30',days:[1,3,5]},
   {id:3,name:'영어 수업',type:'routine',period:'morning',time:'08:00',days:[3]},
@@ -271,8 +273,8 @@ const BASE_ROUTINES=[
   {id:7,name:'일기 쓰기',type:'personal',period:'evening',time:'21:00',days:[0,1,2,3,4,5,6]},
 ];
 
-function gs(){try{return JSON.parse(localStorage.getItem('danalog3')||'{}')}catch(e){return{}}}
-function ss(d){try{localStorage.setItem('danalog3',JSON.stringify(d))}catch(e){}}
+function gs(){try{return JSON.parse(localStorage.getItem('danalog4')||'{}')}catch(e){return{}}}
+function ss(d){try{localStorage.setItem('danalog4',JSON.stringify(d))}catch(e){}}
 function getRoutines(){const s=gs();return s.routines||JSON.parse(JSON.stringify(BASE_ROUTINES));}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 
@@ -291,37 +293,80 @@ function setSyncStatus(msg,ok){
   el.style.color=ok===false?'#ef4444':ok===true?'#22c55e':'#aaa';
 }
 
-async function syncNow(){
-  setSyncStatus('동기화 중...',null);
-  try{
-    const s=gs();const checked=s.checked||{};const extras=s.extras||{};
-    const entries=[];
-    const allDates=new Set([...Object.keys(checked),...Object.keys(extras)]);
-    allDates.forEach(key=>{
-      const d=new Date(key);const tasks=getDayTasks(d);
-      tasks.forEach(t=>{entries.push({date:key,taskId:String(t.id),taskName:t.name,type:t.type,done:t.done?'true':'false',timestamp:new Date().toISOString()});});
-    });
-    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',entries})});
-    const data=await res.json();
-    if(data.ok)setSyncStatus('동기화 완료 ✓',true);
-    else setSyncStatus('오류 발생',false);
-  }catch(e){setSyncStatus('연결 실패',false);}
+async function supaFetch(path, options={}){
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      'apikey': SUPA_KEY,
+      'Authorization': `Bearer ${SUPA_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal',
+      ...(options.headers||{})
+    }
+  });
+  return res;
 }
 
-async function loadFromSheets(){
-  setSyncStatus('불러오는 중...',null);
-  try{
-    const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'load'})});
-    const data=await res.json();
-    if(!data.ok){setSyncStatus('불러오기 실패',false);return;}
-    const s=gs();if(!s.checked)s.checked={};
-    data.data.forEach(row=>{
-      const key=row.date;const id=isNaN(Number(row.taskId))?row.taskId:Number(row.taskId);
-      if(!s.checked[key])s.checked[key]={};
-      s.checked[key][id]=row.done==='true';
+async function syncNow(){
+  setSyncStatus('동기화 중...', null);
+  try {
+    const s=gs();
+    const checked=s.checked||{};
+    const extras=s.extras||{};
+    const allDates=new Set([...Object.keys(checked),...Object.keys(extras)]);
+    const rows=[];
+    allDates.forEach(key=>{
+      const d=new Date(key);
+      getDayTasks(d).forEach(t=>{
+        rows.push({
+          date: key,
+          task_id: String(t.id),
+          task_name: t.name,
+          type: t.type,
+          done: t.done,
+          timestamp: new Date().toISOString()
+        });
+      });
     });
-    ss(s);setSyncStatus('불러오기 완료 ✓',true);renderToday();
-  }catch(e){setSyncStatus('연결 실패',false);}
+    await supaFetch(`${TABLE}?date=neq.null`, {method:'DELETE'});
+    if(rows.length > 0){
+      await supaFetch(TABLE, {
+        method:'POST',
+        headers:{'Prefer':'return=minimal'},
+        body: JSON.stringify(rows)
+      });
+    }
+    setSyncStatus('동기화 완료 ✓', true);
+  } catch(e){
+    setSyncStatus('연결 실패', false);
+    console.error(e);
+  }
+}
+
+async function loadFromSupabase(){
+  setSyncStatus('불러오는 중...', null);
+  try {
+    const res = await supaFetch(`${TABLE}?select=*&order=date.asc`, {
+      method:'GET',
+      headers:{'Prefer':''}
+    });
+    const data = await res.json();
+    if(!Array.isArray(data)){setSyncStatus('불러오기 실패', false);return;}
+    const s=gs();
+    if(!s.checked)s.checked={};
+    data.forEach(row=>{
+      const key=row.date;
+      const id=isNaN(Number(row.task_id))?row.task_id:Number(row.task_id);
+      if(!s.checked[key])s.checked[key]={};
+      s.checked[key][id]=row.done;
+    });
+    ss(s);
+    setSyncStatus('불러오기 완료 ✓', true);
+    renderToday();
+  } catch(e){
+    setSyncStatus('연결 실패', false);
+    console.error(e);
+  }
 }
 
 function toggleTask(id){
@@ -507,8 +552,8 @@ function renderRoutineSettings(){
         ${r.time?`<span class="task-time">${r.time}</span>`:''}
         <span class="badge b-${r.type}">${r.type==='routine'?'루틴':r.type==='work'?'업무':'개인'}</span>
         <span style="font-size:11px;color:#aaa">${r.days.map(d=>DAYS_KR[d]).join(' ')}</span>
-        <button class="icon-btn" onclick="toggleEditForm(${r.id})" title="수정">✏️</button>
-        ${!isBase(r)?`<button class="icon-btn del" onclick="deleteRoutine(${r.id})" title="삭제">✕</button>`:''}
+        <button class="icon-btn" onclick="toggleEditForm(${r.id})">✏️</button>
+        ${!isBase(r)?`<button class="icon-btn del" onclick="deleteRoutine(${r.id})">✕</button>`:''}
       </div>
       <div id="edit-form-${r.id}" class="edit-form hidden">
         <div class="form-row">
@@ -539,14 +584,8 @@ function renderRoutineSettings(){
     </div>`).join('');
 }
 
-function toggleEditForm(id){
-  const el=document.getElementById(`edit-form-${id}`);
-  el.classList.toggle('hidden');
-}
-
-function toggleEditDay(btn){
-  btn.classList.toggle('sel');
-}
+function toggleEditForm(id){document.getElementById(`edit-form-${id}`).classList.toggle('hidden');}
+function toggleEditDay(btn){btn.classList.toggle('sel');}
 
 function saveRoutineEdit(id){
   const name=document.getElementById(`e-name-${id}`).value.trim();
@@ -557,9 +596,8 @@ function saveRoutineEdit(id){
   const days=[...document.querySelectorAll(`[data-edit="${id}"].sel`)].map(b=>parseInt(b.dataset.d));
   if(!days.length){alert('요일을 선택해줘!');return;}
   const s=gs();
-  const routines=getRoutines().map(r=>r.id===id?{...r,name,type,time,period,days}:r);
-  s.routines=routines;ss(s);
-  renderRoutineSettings();
+  s.routines=getRoutines().map(r=>r.id===id?{...r,name,type,time,period,days}:r);
+  ss(s);renderRoutineSettings();
 }
 
 function deleteRoutine(id){
@@ -663,7 +701,7 @@ function addRoutine(){
 }
 
 renderToday();
-loadFromSheets();
+loadFromSupabase();
 scheduleNotifs();
 </script>
 </body>
