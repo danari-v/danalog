@@ -328,13 +328,20 @@ async function syncNow(){
         });
       });
     });
-    await supaFetch(`${TABLE}?date=neq.null`, {method:'DELETE'});
+    // 기존 데이터 전체 삭제 후 새로 insert
+    const delRes = await supaFetch(`${TABLE}?id=gte.0`, {method:'DELETE'});
     if(rows.length > 0){
-      await supaFetch(TABLE, {
+      const insRes = await supaFetch(TABLE, {
         method:'POST',
         headers:{'Prefer':'return=minimal'},
         body: JSON.stringify(rows)
       });
+      if(!insRes.ok){
+        const err = await insRes.text();
+        console.error('insert error:', err);
+        setSyncStatus('저장 실패', false);
+        return;
+      }
     }
     setSyncStatus('동기화 완료 ✓', true);
   } catch(e){
