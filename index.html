@@ -311,12 +311,15 @@ async function supaFetch(table,options={}){
 async function syncAll(){
   setSyncStatus('동기화 중...',null);
   try{
-    // 1. 루틴 동기화
-    await supaFetch('danalog_routines?id=gte.0',{method:'DELETE'});
+    // 1. 루틴 동기화 (upsert 방식 - 중복 방지)
     const routines=getRoutines();
     if(routines.length>0){
+      // 기존 삭제 후 재삽입 (routine_id 기준으로 중복 제거)
+      await supaFetch('danalog_routines?id=gte.0',{method:'DELETE'});
+      await new Promise(r=>setTimeout(r,300));
       await supaFetch('danalog_routines',{
         method:'POST',
+        headers:{'Prefer':'resolution=merge-duplicates'},
         body:JSON.stringify(routines.map(r=>({
           routine_id:String(r.id),
           name:r.name,
