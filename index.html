@@ -1,11 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <title>Danalog 🐰</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -14,10 +13,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .header{display:flex;align-items:center;justify-content:space-between;background:#fff;padding:1rem;border-radius:12px;margin-bottom:1rem;border:1px solid #e8e8e0}
 .logo{font-size:22px;font-weight:600}
 .right-header{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
-.date-nav{display:flex;align-items:center;gap:8px;font-size:13px;color:#666}
+.date-nav{display:flex;align-items:center;gap:8px;font-size:13px}
 .nav-btn{background:none;border:1px solid #ddd;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;color:#1a1a1a}
 .nav-btn:hover{background:#f0f0ea}
-.sync-row{display:flex;align-items:center;gap:8px}
+.sync-row{display:flex;align-items:center;gap:6px}
 .sync-btn{font-size:12px;padding:4px 10px;border:1px solid #ddd;border-radius:8px;background:none;cursor:pointer;color:#555}
 .sync-btn:hover{background:#f0f0ea}
 .sync-status{font-size:11px;color:#999}
@@ -49,7 +48,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .form-row input,.form-row select{flex:1;font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a}
 .form-actions{display:flex;gap:8px}
 .save-btn{flex:1;padding:9px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500}
-.save-btn:hover{background:#333}
 .cancel-btn{padding:9px 14px;background:none;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:14px;color:#666}
 .prog-wrap{background:#f0f0ea;border-radius:99px;height:7px;margin-bottom:4px}
 .prog-bar{height:7px;border-radius:99px;background:#22c55e;transition:width .3s}
@@ -106,10 +104,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .hidden{display:none}
 .day-btn{padding:6px 10px;border-radius:8px;border:1px solid #ddd;background:none;cursor:pointer;font-size:13px;color:#666}
 .day-btn.sel{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.banner{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
-.banner-warn{background:#fffbeb;color:#d97706;border:1px solid #fed7aa}
 .edit-form{background:#f0f7ff;border-radius:10px;padding:.875rem;margin-bottom:6px;border:1px solid #bfdbfe}
 .edit-form .form-row input,.edit-form .form-row select{background:#fff}
+.banner{border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:1rem}
+.banner-warn{background:#fffbeb;color:#d97706;border:1px solid #fed7aa}
 </style>
 </head>
 <body>
@@ -125,8 +123,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="sync-row">
       <span class="sync-status" id="sync-status">준비 중...</span>
-      <button class="sync-btn" onclick="loadAll()">↓ 불러오기</button>
-      <button class="sync-btn" onclick="syncAll()">↑ 동기화</button>
+      <button class="sync-btn" onclick="loadFromSheets()">↓ 불러오기</button>
+      <button class="sync-btn" onclick="syncNow()">↑ 동기화</button>
     </div>
   </div>
 </div>
@@ -258,479 +256,368 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 </div>
 <script>
-const SUPA_URL='https://xpktnnmlseazyznnbeqs.supabase.co';
-const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhwa3Rubm1sc2Vhenl6bm5iZXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MDQyOTUsImV4cCI6MjA5MDM4MDI5NX0.S7fo0rLrga3ArOajAI_mo-UYZ_hm3l6m7Zi6j57Tii4';
+const API_URL='https://script.google.com/macros/s/AKfycbzU-VTvM7ioFau7VYr-YSTBIcXmXL6lQ7eB9DliiHmcycxJ3AgSgsZaKEMR-H4WHA4/exec';
 const DAYS_KR=['일','월','화','수','목','금','토'];
-
 let today=new Date();
 let viewDate=new Date(today);
 let viewMonth=new Date(today.getFullYear(),today.getMonth(),1);
 
 const BASE_ROUTINES=[
-  {id:1,name:'테니스',type:'routine',period:'morning',time:'07:00',days:[2,4]},
-  {id:2,name:'런닝 / 운동',type:'routine',period:'morning',time:'06:30',days:[1,3,5]},
-  {id:3,name:'영어 수업',type:'routine',period:'morning',time:'08:00',days:[3]},
-  {id:4,name:'업무 확인',type:'work',period:'morning',time:'09:00',days:[1,2,3,4,5]},
-  {id:5,name:'미팅',type:'work',period:'afternoon',time:'14:00',days:[1,2,3,4,5]},
-  {id:6,name:'홈케어',type:'routine',period:'evening',time:'20:00',days:[0,1,2,3,4,5,6]},
-  {id:7,name:'일기 쓰기',type:'personal',period:'evening',time:'21:00',days:[0,1,2,3,4,5,6]},
+{id:1,name:‘테니스’,type:‘routine’,period:‘morning’,time:‘07:00’,days:[2,4]},
+{id:2,name:‘런닝 / 운동’,type:‘routine’,period:‘morning’,time:‘06:30’,days:[1,3,5]},
+{id:3,name:‘영어 수업’,type:‘routine’,period:‘morning’,time:‘08:00’,days:[3]},
+{id:4,name:‘업무 확인’,type:‘work’,period:‘morning’,time:‘09:00’,days:[1,2,3,4,5]},
+{id:5,name:‘미팅’,type:‘work’,period:‘afternoon’,time:‘14:00’,days:[1,2,3,4,5]},
+{id:6,name:‘홈케어’,type:‘routine’,period:‘evening’,time:‘20:00’,days:[0,1,2,3,4,5,6]},
+{id:7,name:‘일기 쓰기’,type:‘personal’,period:‘evening’,time:‘21:00’,days:[0,1,2,3,4,5,6]},
 ];
 
-function gs(){try{return JSON.parse(localStorage.getItem('danalog5')||'{}')}catch(e){return{}}}
-function ss(d){try{localStorage.setItem('danalog5',JSON.stringify(d))}catch(e){}}
+function gs(){try{return JSON.parse(localStorage.getItem(‘danalog6’)||’{}’)}catch(e){return{}}}
+function ss(d){try{localStorage.setItem(‘danalog6’,JSON.stringify(d))}catch(e){}}
 function getRoutines(){const s=gs();return s.routines||JSON.parse(JSON.stringify(BASE_ROUTINES));}
 function dateKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 
 function getDayTasks(d){
-  const dow=d.getDay();const s=gs();const key=dateKey(d);
-  const checked=s.checked||{};const extras=s.extras||{};
-  const tasks=getRoutines().filter(t=>t.days.includes(dow)).map(t=>({...t,done:!!(checked[key]&&checked[key][t.id])}));
-  const ext=(extras[key]||[]).map(t=>({...t,done:!!(checked[key]&&checked[key][t.id])}));
-  return [...tasks,...ext];
+const dow=d.getDay();const s=gs();const key=dateKey(d);
+const checked=s.checked||{};const extras=s.extras||{};
+const tasks=getRoutines().filter(t=>t.days.includes(dow)).map(t=>({…t,done:!!(checked[key]&&checked[key][t.id])}));
+const ext=(extras[key]||[]).map(t=>({…t,done:!!(checked[key]&&checked[key][t.id])}));
+return […tasks,…ext];
 }
 
 function setSyncStatus(msg,ok){
-  const el=document.getElementById('sync-status');
-  el.textContent=msg;
-  el.style.color=ok===false?'#ef4444':ok===true?'#22c55e':'#aaa';
+const el=document.getElementById(‘sync-status’);
+el.textContent=msg;
+el.style.color=ok===false?’#ef4444’:ok===true?’#22c55e’:’#aaa’;
 }
 
-async function supaFetch(table,options={}){
-  const res=await fetch(`${SUPA_URL}/rest/v1/${table}`,{
-    ...options,
-    headers:{
-      'apikey':SUPA_KEY,
-      'Authorization':`Bearer ${SUPA_KEY}`,
-      'Content-Type':'application/json',
-      'Prefer':'return=minimal',
-      ...(options.headers||{})
-    }
-  });
-  return res;
+async function syncNow(){
+setSyncStatus(‘동기화 중…’,null);
+try{
+const s=gs();
+const checked=s.checked||{};const extras=s.extras||{};
+const allDates=new Set([…Object.keys(checked),…Object.keys(extras)]);
+const entries=[];
+allDates.forEach(key=>{
+getDayTasks(new Date(key)).forEach(t=>{
+entries.push({date:key,taskId:String(t.id),taskName:t.name,type:t.type,done:t.done?‘true’:‘false’,timestamp:new Date().toISOString()});
+});
+});
+// 루틴 설정도 저장
+const routineEntry={date:’**routines**’,taskId:‘config’,taskName:JSON.stringify(getRoutines()),type:‘config’,done:‘false’,timestamp:new Date().toISOString()};
+entries.push(routineEntry);
+
+```
+const res=await fetch(API_URL,{method:'POST',body:JSON.stringify({action:'sync',entries})});
+const data=await res.json();
+if(data.ok)setSyncStatus('동기화 완료 ✓',true);
+else setSyncStatus('오류 발생',false);
+```
+
+}catch(e){setSyncStatus(‘연결 실패’,false);}
 }
 
-async function syncAll(){
-  setSyncStatus('동기화 중...',null);
-  try{
-    // 1. 루틴 동기화 (upsert 방식 - 중복 방지)
-    const routines=getRoutines();
-    if(routines.length>0){
-      // 기존 삭제 후 재삽입 (routine_id 기준으로 중복 제거)
-      await supaFetch('danalog_routines?id=gte.0',{method:'DELETE'});
-      await new Promise(r=>setTimeout(r,300));
-      await supaFetch('danalog_routines',{
-        method:'POST',
-        headers:{'Prefer':'resolution=merge-duplicates'},
-        body:JSON.stringify(routines.map(r=>({
-          routine_id:String(r.id),
-          name:r.name,
-          type:r.type,
-          period:r.period,
-          time:r.time||'',
-          days:JSON.stringify(r.days)
-        })))
-      });
-    }
-    // 2. 체크 데이터 동기화
-    const s=gs();
-    const checked=s.checked||{};const extras=s.extras||{};
-    const allDates=new Set([...Object.keys(checked),...Object.keys(extras)]);
-    const rows=[];
-    allDates.forEach(key=>{
-      getDayTasks(new Date(key)).forEach(t=>{
-        rows.push({date:key,task_id:String(t.id),task_name:t.name,type:t.type,period:t.period||'',time:t.time||'',done:t.done,timestamp:new Date().toISOString()});
-      });
-    });
-    await supaFetch('danalog_log?id=gte.0',{method:'DELETE'});
-    if(rows.length>0){
-      await supaFetch('danalog_log',{method:'POST',body:JSON.stringify(rows)});
-    }
-    await loadAll(true);
-    setSyncStatus('동기화 완료 ✓',true);
-  }catch(e){
-    setSyncStatus('연결 실패',false);
-    console.error(e);
-  }
+async function loadFromSheets(){
+setSyncStatus(‘불러오는 중…’,null);
+try{
+const res=await fetch(API_URL,{method:‘POST’,body:JSON.stringify({action:‘load’})});
+const data=await res.json();
+if(!data.ok){setSyncStatus(‘불러오기 실패’,false);return;}
+const s=gs();
+if(!s.checked)s.checked={};
+if(!s.extras)s.extras={};
+// 루틴 설정 복원
+const routineRow=data.data.find(r=>r.date===’**routines**’);
+if(routineRow&&routineRow.taskName){
+try{s.routines=JSON.parse(routineRow.taskName);}catch(e){}
 }
-
-async function loadAll(afterSync=false){
-  if(!afterSync)setSyncStatus('불러오는 중...',null);
-  try{
-    const rRes=await supaFetch('danalog_routines?select=*&order=id.asc',{method:'GET',headers:{'Prefer':''}});
-    const rData=await rRes.json();
-    const s=gs();
-    if(Array.isArray(rData)&&rData.length>0){
-      s.routines=rData.map(r=>({
-        id:isNaN(Number(r.routine_id))?r.routine_id:Number(r.routine_id),
-        name:r.name,type:r.type,period:r.period,time:r.time,
-        days:JSON.parse(r.days||'[]')
-      }));
-    }
-    const lRes=await supaFetch('danalog_log?select=*&order=date.asc',{method:'GET',headers:{'Prefer':''}});
-    const lData=await lRes.json();
-    if(Array.isArray(lData)){
-      s.checked={};s.extras={};
-      const routineIds=new Set((s.routines||BASE_ROUTINES).map(r=>String(r.id)));
-      lData.forEach(row=>{
-        const key=row.date;
-        const idStr=String(row.task_id);
-        const id=isNaN(Number(idStr))?idStr:Number(idStr);
-        if(!s.checked[key])s.checked[key]={};
-        s.checked[key][id]=row.done;
-        if(!routineIds.has(idStr)){
-          if(!s.extras[key])s.extras[key]=[];
-          if(!s.extras[key].find(e=>String(e.id)===idStr)){
-            const periodGuess=!row.time?'morning':row.time<'12:00'?'morning':row.time<'19:00'?'afternoon':'evening';
-            s.extras[key].push({id:id,name:row.task_name,type:row.type,period:row.period||periodGuess,time:row.time||'',days:[]});
-          }
-        }
-      });
-    }
-    ss(s);
-    if(!afterSync)setSyncStatus('불러오기 완료 ✓',true);
-    renderToday();
-  }catch(e){
-    if(!afterSync)setSyncStatus('연결 실패',false);
-    console.error(e);
-  }
+// 체크 + extras 복원
+s.checked={};s.extras={};
+const routineIds=new Set(getRoutines().map(r=>String(r.id)));
+data.data.filter(r=>r.date!==’**routines**’).forEach(row=>{
+const key=row.date;
+const id=isNaN(Number(row.taskId))?row.taskId:Number(row.taskId);
+if(!s.checked[key])s.checked[key]={};
+s.checked[key][id]=row.done===‘true’;
+if(!routineIds.has(String(row.taskId))&&row.type!==‘config’){
+if(!s.extras[key])s.extras[key]=[];
+if(!s.extras[key].find(e=>String(e.id)===String(row.taskId))){
+const t=row.time||’’;
+const p=t<‘12:00’?‘morning’:t<‘19:00’?‘afternoon’:‘evening’;
+s.extras[key].push({id,name:row.taskName,type:row.type,period:p,time:t,days:[]});
+}
+}
+});
+ss(s);
+setSyncStatus(‘불러오기 완료 ✓’,true);
+renderToday();
+}catch(e){setSyncStatus(‘연결 실패’,false);}
 }
 
 function toggleTask(id){
-  const s=gs();const key=dateKey(viewDate);
-  if(!s.checked)s.checked={};if(!s.checked[key])s.checked[key]={};
-  s.checked[key][id]=!s.checked[key][id];
-  ss(s);renderToday();setTimeout(syncAll,800);
+const s=gs();const key=dateKey(viewDate);
+if(!s.checked)s.checked={};if(!s.checked[key])s.checked[key]={};
+s.checked[key][id]=!s.checked[key][id];
+ss(s);renderToday();setTimeout(syncNow,800);
 }
 
 function deleteExtraTask(id){
-  const s=gs();const key=dateKey(viewDate);
-  if(s.extras&&s.extras[key]){s.extras[key]=s.extras[key].filter(t=>t.id!==id);ss(s);renderToday();}
+const s=gs();const key=dateKey(viewDate);
+if(s.extras&&s.extras[key]){s.extras[key]=s.extras[key].filter(t=>t.id!==id);ss(s);renderToday();setTimeout(syncNow,800);}
 }
 
 function renderToday(){
-  const tasks=getDayTasks(viewDate);
-  ['morning','afternoon','evening'].forEach(p=>{
-    const col=document.getElementById('tasks-'+p);
-    const list=tasks.filter(t=>t.period===p).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-    col.innerHTML=list.map(t=>`
-      <div class="task-row ${t.done?'done':''}" onclick="toggleTask(${t.id})">
-        <div class="check ${t.done?'checked':''}">${t.done?'✓':''}</div>
-        ${t.time?`<span class="task-time">${t.time}</span>`:''}
-        <span class="task-name">${t.name}</span>
-        <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span>
-        ${!BASE_ROUTINES.find(r=>r.id===t.id)?`<button class="icon-btn del" onclick="event.stopPropagation();deleteExtraTask(${t.id})">✕</button>`:''}
-      </div>`).join('');
-  });
-  const done=tasks.filter(t=>t.done).length;const total=tasks.length;
-  const pct=total?Math.round(done/total*100):0;
-  document.getElementById('prog-bar').style.width=pct+'%';
-  document.getElementById('prog-label').textContent=`${done} / ${total} 완료 (${pct}%)`;
-  const d=viewDate;
-  document.getElementById('current-date').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]})`;
+const tasks=getDayTasks(viewDate);
+[‘morning’,‘afternoon’,‘evening’].forEach(p=>{
+const col=document.getElementById(‘tasks-’+p);
+const list=tasks.filter(t=>t.period===p).sort((a,b)=>(a.time||’’).localeCompare(b.time||’’));
+col.innerHTML=list.map(t=>` <div class="task-row ${t.done?'done':''}" onclick="toggleTask(${t.id})"> <div class="check ${t.done?'checked':''}">${t.done?'✓':''}</div> ${t.time?`<span class="task-time">${t.time}</span>`:''} <span class="task-name">${t.name}</span> <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span> ${!BASE_ROUTINES.find(r=>r.id===t.id)?`<button class="icon-btn del" onclick="event.stopPropagation();deleteExtraTask(${t.id})">✕</button>`:''} </div>`).join(’’);
+});
+const done=tasks.filter(t=>t.done).length;const total=tasks.length;
+const pct=total?Math.round(done/total*100):0;
+document.getElementById(‘prog-bar’).style.width=pct+’%’;
+document.getElementById(‘prog-label’).textContent=`${done} / ${total} 완료 (${pct}%)`;
+const d=viewDate;
+document.getElementById(‘current-date’).textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]})`;
 }
 
 function renderWeek(){
-  const s=gs();const checked=s.checked||{};
-  const sow=new Date(viewDate);sow.setDate(viewDate.getDate()-viewDate.getDay());
-  const grid=document.getElementById('week-grid');grid.innerHTML='';
-  for(let i=0;i<7;i++){
-    const d=new Date(sow);d.setDate(sow.getDate()+i);
-    const key=dateKey(d);const tasks=getDayTasks(d);
-    const total=tasks.length;const done=total?tasks.filter(t=>checked[key]&&checked[key][t.id]).length:0;
-    const pct=total?Math.round(done/total*100):0;
-    const isToday=dateKey(d)===dateKey(today);
-    const sorted=tasks.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-    const items=sorted.slice(0,4).map(t=>`<div class="week-task-item ${checked[key]&&checked[key][t.id]?'done-item':''}">${t.name}</div>`).join('');
-    const more=sorted.length>4?`<div style="font-size:9px;color:#aaa;text-align:center">+${sorted.length-4}</div>`:'';
-    grid.innerHTML+=`<div class="week-day-col ${isToday?'today':''}">
-      <div class="week-day-name">${DAYS_KR[d.getDay()]}</div>
-      <div class="week-day-date">${d.getDate()}</div>
-      <div class="week-day-pct">${pct}%</div>
-      <div class="week-day-bar"><div class="week-day-fill" style="width:${pct}%"></div></div>
-      ${items}${more}
-    </div>`;
-  }
-  const routines=getRoutines().filter(r=>r.type==='routine');
-  document.getElementById('week-routine-list').innerHTML=routines.map(r=>{
-    let hit=0,tot=0;
-    for(let i=0;i<7;i++){
-      const d=new Date(sow);d.setDate(sow.getDate()+i);
-      if(!r.days.includes(d.getDay()))continue;tot++;
-      const key=dateKey(d);if(checked[key]&&checked[key][r.id])hit++;
-    }
-    const pct=tot?Math.round(hit/tot*100):0;
-    return `<div class="routine-row">
-      <span class="routine-name">${r.name}</span>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div>
-      <span class="bar-label">${hit}/${tot}</span>
-    </div>`;
-  }).join('');
+const s=gs();const checked=s.checked||{};
+const sow=new Date(viewDate);sow.setDate(viewDate.getDate()-viewDate.getDay());
+const grid=document.getElementById(‘week-grid’);grid.innerHTML=’’;
+for(let i=0;i<7;i++){
+const d=new Date(sow);d.setDate(sow.getDate()+i);
+const key=dateKey(d);const tasks=getDayTasks(d);
+const total=tasks.length;const done=total?tasks.filter(t=>checked[key]&&checked[key][t.id]).length:0;
+const pct=total?Math.round(done/total*100):0;
+const isToday=dateKey(d)===dateKey(today);
+const sorted=tasks.slice().sort((a,b)=>(a.time||’’).localeCompare(b.time||’’));
+const items=sorted.slice(0,4).map(t=>`<div class="week-task-item ${checked[key]&&checked[key][t.id]?'done-item':''}">${t.name}</div>`).join(’’);
+const more=sorted.length>4?`<div style="font-size:9px;color:#aaa;text-align:center">+${sorted.length-4}</div>`:’’;
+grid.innerHTML+=`<div class="week-day-col ${isToday?'today':''}"> <div class="week-day-name">${DAYS_KR[d.getDay()]}</div> <div class="week-day-date">${d.getDate()}</div> <div class="week-day-pct">${pct}%</div> <div class="week-day-bar"><div class="week-day-fill" style="width:${pct}%"></div></div> ${items}${more} </div>`;
+}
+const routines=getRoutines().filter(r=>r.type===‘routine’);
+document.getElementById(‘week-routine-list’).innerHTML=routines.map(r=>{
+let hit=0,tot=0;
+for(let i=0;i<7;i++){
+const d=new Date(sow);d.setDate(sow.getDate()+i);
+if(!r.days.includes(d.getDay()))continue;tot++;
+const key=dateKey(d);if(checked[key]&&checked[key][r.id])hit++;
+}
+const pct=tot?Math.round(hit/tot*100):0;
+return `<div class="routine-row"><span class="routine-name">${r.name}</span><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div><span class="bar-label">${hit}/${tot}</span></div>`;
+}).join(’’);
 }
 
 function renderMonth(){
-  const s=gs();const checked=s.checked||{};
-  const y=viewMonth.getFullYear(),m=viewMonth.getMonth();
-  document.getElementById('month-title').textContent=`${y}년 ${m+1}월`;
-  const first=new Date(y,m,1);const last=new Date(y,m+1,0);
-  const grid=document.getElementById('month-grid');grid.innerHTML='';
-  const startDow=first.getDay();
-  for(let i=0;i<startDow;i++){const d=new Date(y,m,1-startDow+i);grid.innerHTML+=calCell(d,true,checked);}
-  for(let i=1;i<=last.getDate();i++){const d=new Date(y,m,i);grid.innerHTML+=calCell(d,false,checked);}
-  const rem=(7-((startDow+last.getDate())%7))%7;
-  for(let i=1;i<=rem;i++){const d=new Date(y,m+1,i);grid.innerHTML+=calCell(d,true,checked);}
+const s=gs();const checked=s.checked||{};
+const y=viewMonth.getFullYear(),m=viewMonth.getMonth();
+document.getElementById(‘month-title’).textContent=`${y}년 ${m+1}월`;
+const first=new Date(y,m,1);const last=new Date(y,m+1,0);
+const grid=document.getElementById(‘month-grid’);grid.innerHTML=’’;
+const startDow=first.getDay();
+for(let i=0;i<startDow;i++){const d=new Date(y,m,1-startDow+i);grid.innerHTML+=calCell(d,true,checked);}
+for(let i=1;i<=last.getDate();i++){const d=new Date(y,m,i);grid.innerHTML+=calCell(d,false,checked);}
+const rem=(7-((startDow+last.getDate())%7))%7;
+for(let i=1;i<=rem;i++){const d=new Date(y,m+1,i);grid.innerHTML+=calCell(d,true,checked);}
 }
 
 function calCell(d,other,checked){
-  const key=dateKey(d);const tasks=getDayTasks(d);const total=tasks.length;
-  const done=total?tasks.filter(t=>checked[key]&&checked[key][t.id]).length:0;
-  const pct=total?Math.round(done/total*100):0;
-  const isToday=dateKey(d)===dateKey(today);
-  let dotColor='transparent';
-  if(total>0){if(pct>=80)dotColor='#22c55e';else if(pct>=40)dotColor='#f59e0b';else dotColor='#ef4444';}
-  const preview=tasks.slice(0,2).map(t=>`<div class="cal-task-preview">${t.name}</div>`).join('');
-  const more=tasks.length>2?`<div class="cal-more">+${tasks.length-2}</div>`:'';
-  return `<div class="cal-day ${other?'other-month':''} ${isToday?'today':''}" onclick="openDayPopup('${key}')">
-    <div class="cal-num">${d.getDate()}</div>
-    <div class="cal-dot" style="background:${dotColor}"></div>
-    ${preview}${more}
+const key=dateKey(d);const tasks=getDayTasks(d);const total=tasks.length;
+const done=total?tasks.filter(t=>checked[key]&&checked[key][t.id]).length:0;
+const pct=total?Math.round(done/total*100):0;
+const isToday=dateKey(d)===dateKey(today);
+let dotColor=‘transparent’;
+if(total>0){if(pct>=80)dotColor=’#22c55e’;else if(pct>=40)dotColor=’#f59e0b’;else dotColor=’#ef4444’;}
+const preview=tasks.slice(0,2).map(t=>`<div class="cal-task-preview">${t.name}</div>`).join(’’);
+const more=tasks.length>2?`<div class="cal-more">+${tasks.length-2}</div>`:’’;
+return `<div class="cal-day ${other?'other-month':''} ${isToday?'today':''}" onclick="openDayPopup('${key}')">
+<div class="cal-num">${d.getDate()}</div>
+<div class="cal-dot" style="background:${dotColor}"></div>
+${preview}${more}
+
   </div>`;
 }
 
 function openDayPopup(key){
-  const d=new Date(key);
-  const tasks=getDayTasks(d).sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-  const done=tasks.filter(t=>t.done).length;
-  document.getElementById('popup-title').textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]}) · ${done}/${tasks.length} 완료`;
-  document.getElementById('popup-body').innerHTML=tasks.length===0
-    ?'<div style="color:#aaa;font-size:14px;padding:1.5rem 0;text-align:center">일정 없음</div>'
-    :tasks.map(t=>`
-      <div class="popup-task">
-        <div class="check ${t.done?'checked':''}">${t.done?'✓':''}</div>
-        ${t.time?`<span style="font-size:12px;color:#aaa;min-width:40px">${t.time}</span>`:''}
-        <span style="flex:1;font-size:14px;${t.done?'text-decoration:line-through;opacity:.5':''}">${t.name}</span>
-        <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span>
-      </div>`).join('');
-  document.getElementById('popup-overlay').classList.remove('hidden');
+const d=new Date(key);
+const tasks=getDayTasks(d).sort((a,b)=>(a.time||’’).localeCompare(b.time||’’));
+const done=tasks.filter(t=>t.done).length;
+document.getElementById(‘popup-title’).textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DAYS_KR[d.getDay()]}) · ${done}/${tasks.length} 완료`;
+document.getElementById(‘popup-body’).innerHTML=tasks.length===0
+?’<div style="color:#aaa;font-size:14px;padding:1.5rem 0;text-align:center">일정 없음</div>’
+:tasks.map(t=>`<div class="popup-task"> <div class="check ${t.done?'checked':''}">${t.done?'✓':''}</div> ${t.time?`<span style="font-size:12px;color:#aaa;min-width:40px">${t.time}</span>`:''} <span style="flex:1;font-size:14px;${t.done?'text-decoration:line-through;opacity:.5':''}">${t.name}</span> <span class="badge b-${t.type}">${t.type==='routine'?'루틴':t.type==='work'?'업무':'개인'}</span> </div>`).join(’’);
+document.getElementById(‘popup-overlay’).classList.remove(‘hidden’);
 }
 
 function closePopup(e){
-  if(!e||e.target===document.getElementById('popup-overlay')){
-    document.getElementById('popup-overlay').classList.add('hidden');
-  }
+if(!e||e.target===document.getElementById(‘popup-overlay’))document.getElementById(‘popup-overlay’).classList.add(‘hidden’);
 }
 
 function renderStats(){
-  const s=gs();const checked=s.checked||{};
-  const sow=new Date(today);sow.setDate(today.getDate()-today.getDay());
-  let weekDone=0,weekTotal=0;
-  for(let i=0;i<7;i++){
-    const d=new Date(sow);d.setDate(sow.getDate()+i);
-    const tasks=getDayTasks(d);const key=dateKey(d);
-    weekTotal+=tasks.length;weekDone+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
-  }
-  document.getElementById('stat-total').textContent=weekDone;
-  document.getElementById('stat-rate').textContent=weekTotal?Math.round(weekDone/weekTotal*100)+'%':'0%';
-  let streak=0;const dd=new Date(today);
-  for(let i=0;i<60;i++){
-    const key=dateKey(dd);const tasks=getDayTasks(dd);
-    if(!tasks.length){dd.setDate(dd.getDate()-1);continue;}
-    const done=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
-    if(done===0)break;streak++;dd.setDate(dd.getDate()-1);
-  }
-  document.getElementById('stat-streak').textContent=streak+'일';
-  const types=['routine','work','personal'];const typeLabels={routine:'루틴',work:'업무',personal:'개인'};
-  document.getElementById('cat-stats').innerHTML=types.map(type=>{
-    let hit=0,tot=0;
-    for(let i=0;i<7;i++){
-      const d=new Date(sow);d.setDate(sow.getDate()+i);const key=dateKey(d);
-      const tasks=getDayTasks(d).filter(t=>t.type===type);
-      tot+=tasks.length;hit+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
-    }
-    const pct=tot?Math.round(hit/tot*100):0;
-    return `<div class="routine-row">
-      <span class="routine-name">${typeLabels[type]}</span>
-      <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#3b82f6"></div></div>
-      <span class="bar-label">${pct}%</span>
-    </div>`;
-  }).join('');
-  const eom=new Date(today.getFullYear(),today.getMonth()+1,0);
-  let mDone=0,mTotal=0;
-  for(let i=1;i<=eom.getDate();i++){
-    const d=new Date(today.getFullYear(),today.getMonth(),i);
-    const key=dateKey(d);const tasks=getDayTasks(d);
-    mTotal+=tasks.length;mDone+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
-  }
-  document.getElementById('month-stats').innerHTML=`
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-num">${mDone}</div><div class="stat-lbl">이번 달 완료</div></div>
-      <div class="stat-card"><div class="stat-num">${mTotal?Math.round(mDone/mTotal*100):0}%</div><div class="stat-lbl">월간 달성률</div></div>
-      <div class="stat-card"><div class="stat-num">${today.getDate()}일</div><div class="stat-lbl">경과일</div></div>
-    </div>`;
+const s=gs();const checked=s.checked||{};
+const sow=new Date(today);sow.setDate(today.getDate()-today.getDay());
+let weekDone=0,weekTotal=0;
+for(let i=0;i<7;i++){
+const d=new Date(sow);d.setDate(sow.getDate()+i);
+const tasks=getDayTasks(d);const key=dateKey(d);
+weekTotal+=tasks.length;weekDone+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
+}
+document.getElementById(‘stat-total’).textContent=weekDone;
+document.getElementById(‘stat-rate’).textContent=weekTotal?Math.round(weekDone/weekTotal*100)+’%’:‘0%’;
+let streak=0;const dd=new Date(today);
+for(let i=0;i<60;i++){
+const key=dateKey(dd);const tasks=getDayTasks(dd);
+if(!tasks.length){dd.setDate(dd.getDate()-1);continue;}
+const done=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
+if(done===0)break;streak++;dd.setDate(dd.getDate()-1);
+}
+document.getElementById(‘stat-streak’).textContent=streak+‘일’;
+const types=[‘routine’,‘work’,‘personal’];const typeLabels={routine:‘루틴’,work:‘업무’,personal:‘개인’};
+document.getElementById(‘cat-stats’).innerHTML=types.map(type=>{
+let hit=0,tot=0;
+for(let i=0;i<7;i++){
+const d=new Date(sow);d.setDate(sow.getDate()+i);const key=dateKey(d);
+const tasks=getDayTasks(d).filter(t=>t.type===type);
+tot+=tasks.length;hit+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
+}
+const pct=tot?Math.round(hit/tot*100):0;
+return `<div class="routine-row"><span class="routine-name">${typeLabels[type]}</span><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:#3b82f6"></div></div><span class="bar-label">${pct}%</span></div>`;
+}).join(’’);
+const eom=new Date(today.getFullYear(),today.getMonth()+1,0);
+let mDone=0,mTotal=0;
+for(let i=1;i<=eom.getDate();i++){
+const d=new Date(today.getFullYear(),today.getMonth(),i);
+const key=dateKey(d);const tasks=getDayTasks(d);
+mTotal+=tasks.length;mDone+=tasks.filter(t=>checked[key]&&checked[key][t.id]).length;
+}
+document.getElementById(‘month-stats’).innerHTML=`<div class="stats-grid">
+<div class="stat-card"><div class="stat-num">${mDone}</div><div class="stat-lbl">이번 달 완료</div></div>
+<div class="stat-card"><div class="stat-num">${mTotal?Math.round(mDone/mTotal*100):0}%</div><div class="stat-lbl">월간 달성률</div></div>
+<div class="stat-card"><div class="stat-num">${today.getDate()}일</div><div class="stat-lbl">경과일</div></div>
+
+  </div>`;
 }
 
 function renderRoutineSettings(){
-  const routines=getRoutines();
-  const isBase=r=>BASE_ROUTINES.find(b=>b.id===r.id);
-  document.getElementById('routine-list-settings').innerHTML=routines.map(r=>`
-    <div id="routine-item-${r.id}">
-      <div class="task-row" style="cursor:default">
-        <span class="task-name">${r.name}</span>
-        ${r.time?`<span class="task-time">${r.time}</span>`:''}
-        <span class="badge b-${r.type}">${r.type==='routine'?'루틴':r.type==='work'?'업무':'개인'}</span>
-        <span style="font-size:11px;color:#aaa">${r.days.map(d=>DAYS_KR[d]).join(' ')}</span>
-        <button class="icon-btn" onclick="toggleEditForm(${r.id})">✏️</button>
-        ${!isBase(r)?`<button class="icon-btn del" onclick="deleteRoutine(${r.id})">✕</button>`:''}
-      </div>
-      <div id="edit-form-${r.id}" class="edit-form hidden">
-        <div class="form-row">
-          <input type="text" id="e-name-${r.id}" value="${r.name}" placeholder="루틴 이름" />
-          <select id="e-type-${r.id}">
-            <option value="routine" ${r.type==='routine'?'selected':''}>루틴</option>
-            <option value="work" ${r.type==='work'?'selected':''}>업무</option>
-            <option value="personal" ${r.type==='personal'?'selected':''}>개인</option>
-          </select>
-        </div>
-        <div class="form-row">
-          <input type="time" id="e-time-${r.id}" value="${r.time||''}" />
-          <select id="e-period-${r.id}">
-            <option value="morning" ${r.period==='morning'?'selected':''}>오전</option>
-            <option value="afternoon" ${r.period==='afternoon'?'selected':''}>오후</option>
-            <option value="evening" ${r.period==='evening'?'selected':''}>저녁</option>
-          </select>
-        </div>
-        <div style="margin-bottom:8px;font-size:13px;color:#888">반복 요일</div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-          ${[0,1,2,3,4,5,6].map(d=>`<button class="day-btn ${r.days.includes(d)?'sel':''}" data-edit="${r.id}" data-d="${d}" onclick="toggleEditDay(this)">${DAYS_KR[d]}</button>`).join('')}
-        </div>
-        <div class="form-actions">
-          <button class="cancel-btn" onclick="toggleEditForm(${r.id})">취소</button>
-          <button class="save-btn" onclick="saveRoutineEdit(${r.id})">저장</button>
-        </div>
-      </div>
-    </div>`).join('');
+const routines=getRoutines();
+const isBase=r=>BASE_ROUTINES.find(b=>b.id===r.id);
+document.getElementById(‘routine-list-settings’).innerHTML=routines.map(r=>` <div id="routine-item-${r.id}"> <div class="task-row" style="cursor:default"> <span class="task-name">${r.name}</span> ${r.time?`<span class="task-time">${r.time}</span>`:''} <span class="badge b-${r.type}">${r.type==='routine'?'루틴':r.type==='work'?'업무':'개인'}</span> <span style="font-size:11px;color:#aaa">${r.days.map(d=>DAYS_KR[d]).join(' ')}</span> <button class="icon-btn" onclick="toggleEditForm(${r.id})">✏️</button> ${!isBase(r)?`<button class="icon-btn del" onclick="deleteRoutine(${r.id})">✕</button>`:''} </div> <div id="edit-form-${r.id}" class="edit-form hidden"> <div class="form-row"> <input type="text" id="e-name-${r.id}" value="${r.name}" /> <select id="e-type-${r.id}"> <option value="routine" ${r.type==='routine'?'selected':''}>루틴</option> <option value="work" ${r.type==='work'?'selected':''}>업무</option> <option value="personal" ${r.type==='personal'?'selected':''}>개인</option> </select> </div> <div class="form-row"> <input type="time" id="e-time-${r.id}" value="${r.time||''}" /> <select id="e-period-${r.id}"> <option value="morning" ${r.period==='morning'?'selected':''}>오전</option> <option value="afternoon" ${r.period==='afternoon'?'selected':''}>오후</option> <option value="evening" ${r.period==='evening'?'selected':''}>저녁</option> </select> </div> <div style="margin-bottom:8px;font-size:13px;color:#888">반복 요일</div> <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap"> ${[0,1,2,3,4,5,6].map(d=>`<button class="day-btn ${r.days.includes(d)?'sel':''}" data-edit="${r.id}" data-d="${d}" onclick="toggleEditDay(this)">${DAYS_KR[d]}</button>`).join('')} </div> <div class="form-actions"> <button class="cancel-btn" onclick="toggleEditForm(${r.id})">취소</button> <button class="save-btn" onclick="saveRoutineEdit(${r.id})">저장</button> </div> </div> </div>`).join(’’);
 }
 
-function toggleEditForm(id){document.getElementById(`edit-form-${id}`).classList.toggle('hidden');}
-function toggleEditDay(btn){btn.classList.toggle('sel');}
+function toggleEditForm(id){document.getElementById(`edit-form-${id}`).classList.toggle(‘hidden’);}
+function toggleEditDay(btn){btn.classList.toggle(‘sel’);}
 
 function saveRoutineEdit(id){
-  const name=document.getElementById(`e-name-${id}`).value.trim();
-  if(!name){alert('이름을 입력해줘!');return;}
-  const type=document.getElementById(`e-type-${id}`).value;
-  const time=document.getElementById(`e-time-${id}`).value;
-  const period=document.getElementById(`e-period-${id}`).value;
-  const days=[...document.querySelectorAll(`[data-edit="${id}"].sel`)].map(b=>parseInt(b.dataset.d));
-  if(!days.length){alert('요일을 선택해줘!');return;}
-  const s=gs();
-  s.routines=getRoutines().map(r=>r.id===id?{...r,name,type,time,period,days}:r);
-  ss(s);renderRoutineSettings();
-  setTimeout(syncAll,500);
+const name=document.getElementById(`e-name-${id}`).value.trim();
+if(!name)return;
+const type=document.getElementById(`e-type-${id}`).value;
+const time=document.getElementById(`e-time-${id}`).value;
+const period=document.getElementById(`e-period-${id}`).value;
+const days=[…document.querySelectorAll(`[data-edit="${id}"].sel`)].map(b=>parseInt(b.dataset.d));
+if(!days.length){alert(‘요일을 선택해줘!’);return;}
+const s=gs();
+s.routines=getRoutines().map(r=>r.id===id?{…r,name,type,time,period,days}:r);
+ss(s);renderRoutineSettings();setTimeout(syncNow,500);
 }
 
 function deleteRoutine(id){
-  if(!confirm('이 루틴을 삭제할까?'))return;
-  const s=gs();s.routines=getRoutines().filter(r=>r.id!==id);ss(s);
-  renderRoutineSettings();setTimeout(syncAll,500);
+if(!confirm(‘이 루틴을 삭제할까?’))return;
+const s=gs();s.routines=getRoutines().filter(r=>r.id!==id);ss(s);
+renderRoutineSettings();setTimeout(syncNow,500);
 }
 
 function renderNotifList(){
-  const s=gs();const notifs=s.notifs||{};
-  const routines=getRoutines().filter(r=>r.time);
-  const perm=Notification.permission;
-  const banner=document.getElementById('notif-banner');const permBtn=document.getElementById('notif-perm-btn');
-  if(perm==='default'){banner.classList.remove('hidden');permBtn.style.display='block';}
-  else{banner.classList.add('hidden');permBtn.style.display='none';}
-  document.getElementById('notif-list').innerHTML=routines.map(r=>{
-    const on=!!(notifs[r.id]);
-    return `<div class="notif-row">
-      <div class="notif-info">
-        <div class="notif-name">${r.name}</div>
-        <div class="notif-time">${r.time} · ${r.days.map(d=>DAYS_KR[d]).join(' ')}</div>
-      </div>
-      <button class="toggle ${on?'on':'off'}" onclick="toggleNotif(${r.id})">
-        <div class="toggle-dot"></div>
-      </button>
-    </div>`;
-  }).join('');
+const s=gs();const notifs=s.notifs||{};
+const routines=getRoutines().filter(r=>r.time);
+const perm=Notification.permission;
+const banner=document.getElementById(‘notif-banner’);const permBtn=document.getElementById(‘notif-perm-btn’);
+if(perm===‘default’){banner.classList.remove(‘hidden’);permBtn.style.display=‘block’;}
+else{banner.classList.add(‘hidden’);permBtn.style.display=‘none’;}
+document.getElementById(‘notif-list’).innerHTML=routines.map(r=>{
+const on=!!(notifs[r.id]);
+return `<div class="notif-row"><div class="notif-info"><div class="notif-name">${r.name}</div><div class="notif-time">${r.time} · ${r.days.map(d=>DAYS_KR[d]).join(' ')}</div></div> <button class="toggle ${on?'on':'off'}" onclick="toggleNotif(${r.id})"><div class="toggle-dot"></div></button></div>`;
+}).join(’’);
 }
 
 function toggleNotif(id){
-  const s=gs();if(!s.notifs)s.notifs={};s.notifs[id]=!s.notifs[id];ss(s);renderNotifList();scheduleNotifs();
+const s=gs();if(!s.notifs)s.notifs={};s.notifs[id]=!s.notifs[id];ss(s);renderNotifList();scheduleNotifs();
 }
 function requestNotifPerm(){Notification.requestPermission().then(()=>renderNotifList());}
 
 let notifTimers=[];
 function scheduleNotifs(){
-  notifTimers.forEach(t=>clearTimeout(t));notifTimers=[];
-  if(Notification.permission!=='granted')return;
-  const s=gs();const notifs=s.notifs||{};
-  const routines=getRoutines().filter(r=>r.time&&notifs[r.id]);
-  const now=new Date();
-  routines.forEach(r=>{
-    if(!r.days.includes(now.getDay()))return;
-    const [h,m]=r.time.split(':').map(Number);
-    const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
-    const diff=target-now;
-    if(diff>0&&diff<86400000){
-      const t=setTimeout(()=>{new Notification('Danalog 🐰',{body:`${r.name} 시간이야!`});},diff);
-      notifTimers.push(t);
-    }
-  });
+notifTimers.forEach(t=>clearTimeout(t));notifTimers=[];
+if(Notification.permission!==‘granted’)return;
+const s=gs();const notifs=s.notifs||{};
+const routines=getRoutines().filter(r=>r.time&&notifs[r.id]);
+const now=new Date();
+routines.forEach(r=>{
+if(!r.days.includes(now.getDay()))return;
+const [h,m]=r.time.split(’:’).map(Number);
+const target=new Date(now.getFullYear(),now.getMonth(),now.getDate(),h,m,0);
+const diff=target-now;
+if(diff>0&&diff<86400000){
+const t=setTimeout(()=>{new Notification(‘Danalog 🐰’,{body:`${r.name} 시간이야!`});},diff);
+notifTimers.push(t);
+}
+});
 }
 
 function switchTab(name,el){
-  ['today','week','month','stats','settings','notif'].forEach(t=>{document.getElementById('tab-'+t).classList.add('hidden');});
-  document.getElementById('tab-'+name).classList.remove('hidden');
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  if(name==='week')renderWeek();
-  if(name==='month')renderMonth();
-  if(name==='stats')renderStats();
-  if(name==='settings')renderRoutineSettings();
-  if(name==='notif')renderNotifList();
+[‘today’,‘week’,‘month’,‘stats’,‘settings’,‘notif’].forEach(t=>{document.getElementById(‘tab-’+t).classList.add(‘hidden’);});
+document.getElementById(‘tab-’+name).classList.remove(‘hidden’);
+document.querySelectorAll(’.tab’).forEach(b=>b.classList.remove(‘active’));
+el.classList.add(‘active’);
+if(name===‘week’)renderWeek();
+if(name===‘month’)renderMonth();
+if(name===‘stats’)renderStats();
+if(name===‘settings’)renderRoutineSettings();
+if(name===‘notif’)renderNotifList();
 }
 
 function changeDay(dir){viewDate.setDate(viewDate.getDate()+dir);renderToday();}
 function changeMonth(dir){viewMonth.setMonth(viewMonth.getMonth()+dir);renderMonth();}
-function showForm(){document.getElementById('add-form-wrap').classList.remove('hidden');}
-function hideForm(){document.getElementById('add-form-wrap').classList.add('hidden');}
+function showForm(){document.getElementById(‘add-form-wrap’).classList.remove(‘hidden’);}
+function hideForm(){document.getElementById(‘add-form-wrap’).classList.add(‘hidden’);}
 
 function addTask(){
-  const name=document.getElementById('new-name').value.trim();if(!name)return;
-  const type=document.getElementById('new-type').value;
-  const time=document.getElementById('new-time').value;
-  const period=document.getElementById('new-period').value;
-  const s=gs();const key=dateKey(viewDate);
-  if(!s.extras)s.extras={};if(!s.extras[key])s.extras[key]=[];
-  const id=Date.now();
-  s.extras[key].push({id,name,type,period,time,days:[viewDate.getDay()]});
-  ss(s);hideForm();document.getElementById('new-name').value='';renderToday();setTimeout(syncAll,800);
+const name=document.getElementById(‘new-name’).value.trim();if(!name)return;
+const type=document.getElementById(‘new-type’).value;
+const time=document.getElementById(‘new-time’).value;
+const period=document.getElementById(‘new-period’).value;
+const s=gs();const key=dateKey(viewDate);
+if(!s.extras)s.extras={};if(!s.extras[key])s.extras[key]=[];
+const id=Date.now();
+s.extras[key].push({id,name,type,period,time,days:[viewDate.getDay()]});
+ss(s);hideForm();document.getElementById(‘new-name’).value=’’;renderToday();setTimeout(syncNow,800);
 }
 
-function showRoutineForm(){document.getElementById('routine-form-wrap').classList.remove('hidden');}
-function hideRoutineForm(){document.getElementById('routine-form-wrap').classList.add('hidden');}
+function showRoutineForm(){document.getElementById(‘routine-form-wrap’).classList.remove(‘hidden’);}
+function hideRoutineForm(){document.getElementById(‘routine-form-wrap’).classList.add(‘hidden’);}
 
-document.querySelectorAll('#day-picker .day-btn').forEach(btn=>{
-  btn.addEventListener('click',()=>btn.classList.toggle('sel'));
+document.querySelectorAll(’#day-picker .day-btn’).forEach(btn=>{
+btn.addEventListener(‘click’,()=>btn.classList.toggle(‘sel’));
 });
 
 function addRoutine(){
-  const name=document.getElementById('r-name').value.trim();if(!name)return;
-  const type=document.getElementById('r-type').value;
-  const time=document.getElementById('r-time').value;
-  const period=document.getElementById('r-period').value;
-  const days=[...document.querySelectorAll('#day-picker .day-btn.sel')].map(b=>parseInt(b.dataset.d));
-  if(!days.length){alert('요일을 선택해줘!');return;}
-  const s=gs();const routines=getRoutines();const id=Date.now();
-  routines.push({id,name,type,period,time,days});s.routines=routines;ss(s);
-  hideRoutineForm();document.getElementById('r-name').value='';
-  document.querySelectorAll('#day-picker .day-btn').forEach(b=>b.classList.remove('sel'));
-  renderRoutineSettings();setTimeout(syncAll,500);
+const name=document.getElementById(‘r-name’).value.trim();if(!name)return;
+const type=document.getElementById(‘r-type’).value;
+const time=document.getElementById(‘r-time’).value;
+const period=document.getElementById(‘r-period’).value;
+const days=[…document.querySelectorAll(’#day-picker .day-btn.sel’)].map(b=>parseInt(b.dataset.d));
+if(!days.length){alert(‘요일을 선택해줘!’);return;}
+const s=gs();const routines=getRoutines();const id=Date.now();
+routines.push({id,name,type,period,time,days});s.routines=routines;ss(s);
+hideRoutineForm();document.getElementById(‘r-name’).value=’’;
+document.querySelectorAll(’#day-picker .day-btn’).forEach(b=>b.classList.remove(‘sel’));
+renderRoutineSettings();setTimeout(syncNow,500);
 }
 
 renderToday();
-loadAll();
+loadFromSheets();
 scheduleNotifs();
 </script>
+
 </body>
 </html>
